@@ -54,3 +54,4 @@ void Model_CPU_naive
 		particles.z[i] += velocitiesz   [i] * 0.1f;
 	}
 }
+// caca
