@@ -7,7 +7,7 @@ Model_CPU_naive
 : Model_CPU(initstate, particles)
 {
 }
-
+//cc
 void Model_CPU_naive
 ::step()
 {
