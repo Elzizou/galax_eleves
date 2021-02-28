@@ -11,3 +11,5 @@ doc/latex/*
 
 .gitignore
 lib/*
+build/*
+CMakeLists.txt
