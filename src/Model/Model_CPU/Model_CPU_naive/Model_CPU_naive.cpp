@@ -15,7 +15,6 @@ void Model_CPU_naive
 	std::fill(accelerationsy.begin(), accelerationsy.end(), 0);
 	std::fill(accelerationsz.begin(), accelerationsz.end(), 0);
 	
-	#pragma omp parallel for
 	for (int i = 0; i < n_particles; i++)
 	{
 		for (int j = 0; j < n_particles; j++)
@@ -45,7 +44,6 @@ void Model_CPU_naive
 		}
 	}
 	
-	#pragma omp parallel for
 	for (int i = 0; i < n_particles; i++)
 	{
 		velocitiesx[i] += accelerationsx[i] * 2.0f;
