@@ -38,7 +38,7 @@ void Model_CPU_fast
 	#pragma omp parallel for
 	for (int i = 0; i < n_particles; i++)
 	{
-		for (int j = i+1; j < n_particles; j+= nreg)
+		for (int j = i+1; j < n_particles; j+= n_reg)
 		{		
 			mipp::Reg<float> diffx, diffy, diffz, dij,
 							tmp, accelx, accely, accelz, dijcond, tmp1;
