@@ -128,12 +128,6 @@ void Model_CPU_fast
 			accelx = &accelerationsx[j];
 			accely = &accelerationsy[j];
 			accelz = &accelerationsz[j];
-			
-			tmp1 = -1.;
-			accelx = accelx*tmp1;
-			accely = accely*tmp1;
-			accelz = accelz*tmp1;
-			
 
 			accelx = fnmadd(tmp, diffx, accelx);
 			accely = fnmadd(tmp, diffy, accely);
