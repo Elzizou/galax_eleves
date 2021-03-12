@@ -24,7 +24,7 @@ void Model_CPU_fast
 	#pragma omp parallel for
 	for (int i = 0; i < n_particles; i++)
 	{
-		for (int j = i; j < n_particles; j++)
+		for (int j = i+1; j < n_particles; j++)
 		{
 			if(i != j)
 			{
@@ -49,8 +49,12 @@ void Model_CPU_fast
 				accelerationsx[i] += diffx * dij * initstate.masses[j];
 				accelerationsy[i] += diffy * dij * initstate.masses[j];
 				accelerationsz[i] += diffz * dij * initstate.masses[j];
+				accelerationsx[j] -= diffx * dij * initstate.masses[i];
+				accelerationsy[j] -= diffy * dij * initstate.masses[i];
+				accelerationsz[j] -= diffz * dij * initstate.masses[i];
 			}
 		}
+
 		velocitiesx[i] += accelerationsx[i] * 2.0f;
 		velocitiesy[i] += accelerationsy[i] * 2.0f;
 		velocitiesz[i] += accelerationsz[i] * 2.0f;
