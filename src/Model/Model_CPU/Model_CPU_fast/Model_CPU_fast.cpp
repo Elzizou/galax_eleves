@@ -1,4 +1,4 @@
-//#define GALAX_MODEL_CPU_FAST
+#define GALAX_MODEL_CPU_FAST
 #ifdef GALAX_MODEL_CPU_FAST
 
 #include <cmath>
