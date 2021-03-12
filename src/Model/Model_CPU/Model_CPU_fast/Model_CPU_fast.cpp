@@ -146,7 +146,7 @@ void Model_CPU_fast
 		}
 	}
 
-		for (int i = 0; i < n_particles; i++)
+	for (int i = 0; i < n_particles; i++)
 	{
 		velocitiesx[i] += accelerationsx[i] * 2.0f;
 		velocitiesy[i] += accelerationsy[i] * 2.0f;
