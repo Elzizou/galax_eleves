@@ -9,7 +9,14 @@ doc/latex/*
 !obj/.gitkeep
 !bin/DroidSans.ttf
 
-lib/
-html/
-latex/
-build/
+.gitignore
+lib/*
+build/*
+CMakeLists.txt
+build/*
+html/*
+latex/*
+CMake*
+cmake*
+Make*
+make*
