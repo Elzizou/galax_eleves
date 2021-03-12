@@ -44,7 +44,7 @@ void Model_CPU_fast
 				dij = 10.0 / (dij * std::sqrt(dij));
 			}
 
-			int n = mipp:N<float>();
+			//int n = mipp:N<float>();
 
 
 			float tmp = dij * initstate.masses[j];
