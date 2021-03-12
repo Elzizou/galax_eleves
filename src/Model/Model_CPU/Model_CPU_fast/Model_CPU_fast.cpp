@@ -1,6 +1,12 @@
 //#define GALAX_MODEL_CPU_FAST
 #ifdef GALAX_MODEL_CPU_FAST
 
+/**
+ * TODO : Gérer les cas ou n_particules n'est pas divisible par n_reg
+ * optimiser le for avec les autres opti
+ **/
+
+
 #include <cmath>
 
 #include "Model_CPU_fast.hpp"
@@ -59,10 +65,13 @@ void Model_CPU_fast
 			diffz = &particles.z[j];
 			diffz = diffz-tmp;
 
-			dij = diffx * diffx + diffy * diffy + diffz * diffz;
+			//dij = diffx * diffx + diffy * diffy + diffz * diffz;
+			tmp = diffz*diffz;
+			dij = fmadd(diffy, diffy, tmp);
+			dij = fmadd(diffx, diffx, dij); // dij = diffx^2+diffy^2+diffz^2
 
 			tmp1 = 10.;
-			dij = tmp1/(dij*mipp::sqrt(dij));
+			dij = tmp1*mipp::rsqrt(dij)/dij;
 			dij = max(dij, tmp1);
 
 			/*if (dij < 1.0)
@@ -85,7 +94,7 @@ void Model_CPU_fast
 				accelz[i] = accelerationsz[i+k];
 			}*/
 
-			tmp1 = &initstate.masses[i];
+			tmp1 = &initstate.masses[j];
 			tmp  = dij*tmp1;
 			accelx = &accelerationsx[i];
 			accely = &accelerationsy[i];
