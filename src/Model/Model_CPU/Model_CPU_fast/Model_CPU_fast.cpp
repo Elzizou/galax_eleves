@@ -52,7 +52,7 @@ void Model_CPU_fast
 			accelerationsy[i] += diffy * tmp;
 			accelerationsz[i] += diffz * tmp;
 
-			float tmp = dij * initstate.masses[i];
+			tmp = dij * initstate.masses[i];
 			accelerationsx[j] -= diffx * tmp;
 			accelerationsy[j] -= diffy * tmp;
 			accelerationsz[j] -= diffz * tmp;
