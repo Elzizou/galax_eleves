@@ -54,7 +54,11 @@ void Model_CPU_fast
 				accelerationsz[j] -= diffz * dij * initstate.masses[i];
 			}
 		}
-
+	}
+	
+	#pragma omp parallel for
+	for (int i = 0; i < n_particles; i++)
+	{	
 		velocitiesx[i] += accelerationsx[i] * 2.0f;
 		velocitiesy[i] += accelerationsy[i] * 2.0f;
 		velocitiesz[i] += accelerationsz[i] * 2.0f;
@@ -62,8 +66,6 @@ void Model_CPU_fast
 		particles.y[i] += velocitiesy   [i] * 0.1f;
 		particles.z[i] += velocitiesz   [i] * 0.1f;
 	}
-	
-	
 
 
 // OMP  version
