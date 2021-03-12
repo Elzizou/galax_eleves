@@ -47,17 +47,21 @@ void Model_CPU_fast
 			int n = mipp:N<float>();
 
 
-			accelerationsx[i] += diffx * dij * initstate.masses[j];
-			accelerationsy[i] += diffy * dij * initstate.masses[j];
-			accelerationsz[i] += diffz * dij * initstate.masses[j];
+			float tmp = dij * initstate.masses[j];
+			accelerationsx[i] += diffx * tmp;
+			accelerationsy[i] += diffy * tmp;
+			accelerationsz[i] += diffz * tmp;
 
-			accelerationsx[j] -= diffx * dij * initstate.masses[i];
-			accelerationsy[j] -= diffy * dij * initstate.masses[i];
-			accelerationsz[j] -= diffz * dij * initstate.masses[i];
+			float tmp = dij * initstate.masses[i];
+			accelerationsx[j] -= diffx * tmp;
+			accelerationsy[j] -= diffy * tmp;
+			accelerationsz[j] -= diffz * tmp;
 		}
 	}
 
-for(int i = 0; i < n_particles; i++)
+	
+#pragma omp parallel for
+for (int i = 0; i < n_particles; i++)
 {
 		velocitiesx[i] += accelerationsx[i] * 2.0f;
 		velocitiesy[i] += accelerationsy[i] * 2.0f;
@@ -66,8 +70,6 @@ for(int i = 0; i < n_particles; i++)
 		particles.y[i] += velocitiesy   [i] * 0.1f;
 		particles.z[i] += velocitiesz   [i] * 0.1f;
 }
-	
-	
 
 
 // OMP  version
