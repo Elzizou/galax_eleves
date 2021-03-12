@@ -1,3 +1,4 @@
+//#define GALAX_MODEL_CPU_FAST
 #ifdef GALAX_MODEL_CPU_FAST
 
 #include <cmath>
@@ -7,6 +8,7 @@
 #include <mipp.h>
 #include <omp.h>
 #include <math.h>
+#include <iostream>
 
 Model_CPU_fast
 ::Model_CPU_fast(const Initstate& initstate, Particles& particles)
@@ -17,6 +19,11 @@ Model_CPU_fast
 void Model_CPU_fast
 ::step()
 {
+
+	//int n = mipp::N<float>();
+	//std::cout << "kek " << n << std::endl;
+
+
 	std::fill(accelerationsx.begin(), accelerationsx.end(), 0);
 	std::fill(accelerationsy.begin(), accelerationsy.end(), 0);
 	std::fill(accelerationsz.begin(), accelerationsz.end(), 0);
@@ -44,18 +51,38 @@ void Model_CPU_fast
 				dij = 10.0 / (dij * std::sqrt(dij));
 			}
 
-			//int n = mipp:N<float>();
-
+			//std::vector<float> v1(7);
+			//std::vector<float> v2(7);
 
 			float tmp = dij * initstate.masses[j];
-			accelerationsx[i] += diffx * tmp;
-			accelerationsy[i] += diffy * tmp;
-			accelerationsz[i] += diffz * tmp;
+
+			/*v1[0] = tmp;
+			v1[1] = diffx;
+			v1[2] = diffy;
+			v1[3] = diffz;
+			v1[4] = accelerationsx[i];
+			v1[5] = accelerationsy[i];
+			v1[6] = accelerationsz[i];*/
+
+			mipp::Reg<float> r1,r2,r3,r4;
+
+			r1 = tmp; 	//tmp
+			r2 = {diffx, diffy, diffz, 0.};		// diffxyz
+			r3 = {accelerationsx[i], accelerationsy[i], accelerationsz[i], 0.};		//accelerationsxyz
+			r4 = mipp::fmadd(r1,r2,r3);
+
+			accelerationsx[i] = r4[0];
+			accelerationsy[i] = r4[1];
+			accelerationsz[i] = r4[2];
 
 			tmp = dij * initstate.masses[i];
-			accelerationsx[j] -= diffx * tmp;
-			accelerationsy[j] -= diffy * tmp;
-			accelerationsz[j] -= diffz * tmp;
+
+			r1 = tmp;
+			r3 = {-accelerationsx[j], -accelerationsy[j], -accelerationsz[j], 0.};
+			r4 = mipp::fnmadd(r1,r2,r3);
+			accelerationsx[j] = r4[0];
+			accelerationsy[j] = r4[1];
+			accelerationsz[j] = r4[2];
 		}
 	}
 
