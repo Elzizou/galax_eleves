@@ -71,8 +71,8 @@ void Model_CPU_fast
 			dij = fmadd(diffx, diffx, dij); // dij = diffx^2+diffy^2+diffz^2
 
 			tmp1 = 10.;
-			dij = tmp1*mipp::rsqrt(dij)/dij;
-			dij = max(dij, tmp1);
+			dij  = tmp1*mipp::rsqrt(dij)/dij;
+			dij  = mipp::min(dij, tmp1);
 
 			/*if (dij < 1.0)
 			{
