@@ -35,10 +35,10 @@ void Model_CPU_fast
 	std::fill(accelerationsz.begin(), accelerationsz.end(), 0);
 	int n_reg = mipp::N<float>();
 	
-	#pragma omp parallel for schedule(static,1)
-	for (int i = 0; i < n_particles; i+=n_reg)
+	//#pragma omp parallel for schedule(static,1)
+	for (int i = 0; i < n_particles; i++)
 	{
-		for (int j = i+1; j < n_particles; j+= n_reg)
+		for (int j = i+1; j < n_particles; j+=n_reg)
 		{		
 			mipp::Reg<float> diffx, diffy, diffz, dij,
 							tmp, accelx, accely, accelz, dijcond, tmp1;
@@ -53,15 +53,15 @@ void Model_CPU_fast
 				diffz[k] = particles.z[j+k] - particles.z[i+k];
 			}*/
 
-			tmp   = &particles.x[i];
+			tmp   = particles.x[i];
 			diffx = &particles.x[j];
 			diffx = diffx-tmp;
 
-			tmp   = &particles.y[i];
+			tmp   = particles.y[i];
 			diffy = &particles.y[j];
 			diffy = diffy-tmp;
 
-			tmp   = &particles.z[i];
+			tmp   = particles.z[i];
 			diffz = &particles.z[j];
 			diffz = diffz-tmp;
 
@@ -96,14 +96,20 @@ void Model_CPU_fast
 
 			tmp1 = &initstate.masses[j];
 			tmp  = dij*tmp1;
-			accelx = &accelerationsx[i];
-			accely = &accelerationsy[i];
-			accelz = &accelerationsz[i];
+			accelx = accelerationsx[i];
+			accely = accelerationsy[i];
+			accelz = accelerationsz[i];
 
-			accelx = fmadd(tmp, diffx, accelx);
-			accely = fmadd(tmp, diffy, accely);
-			accelz = fmadd(tmp, diffz, accelz);
+			//accelx = fmadd(tmp, diffx, accelx);
+			//accely = fmadd(tmp, diffy, accely);
+			//accelz = fmadd(tmp, diffz, accelz);
+			diffx *= tmp;
+			diffy *= tmp;
+			diffz *= tmp;
 
+			accelerationsx[i] += mipp::hadd(diffx);
+			accelerationsx[i] += mipp::hadd(diffy);
+			accelerationsx[i] += mipp::hadd(diffz);
 			/*for(int k = 0; k<n_reg; k++)
 			{
 				accelerationsx[i+k] = accelx;
@@ -111,9 +117,9 @@ void Model_CPU_fast
 				accelerationsz[i+k] = accelz;
 			}*/
 
-			accelx.store(&accelerationsx[i]);
-			accely.store(&accelerationsy[i]);
-			accelz.store(&accelerationsz[i]);
+			//accelx.store(&accelerationsx[i]);
+			//accely.store(&accelerationsy[i]);
+			//accelz.store(&accelerationsz[i]);
 
 
 			/*for(int k = 0; k<n_reg; k++)
@@ -123,7 +129,7 @@ void Model_CPU_fast
 				accely[k] = -accelerationsy[j+k];
 				accelz[k] = -accelerationsz[j+k];
 			}*/
-			tmp1 = &initstate.masses[i];
+			tmp1 = initstate.masses[i];
 			tmp = dij*tmp1;
 			accelx = &accelerationsx[j];
 			accely = &accelerationsy[j];
