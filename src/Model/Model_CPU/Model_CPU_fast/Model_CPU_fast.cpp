@@ -96,14 +96,7 @@ void Model_CPU_fast
 			//float dijcond = static_cast<float>(signbit(dij-1))-0.5;
 			//dij = (1.0+dijcond)*10.0/(dij*std::sqrt(dij)) + (1.0-dijcond)*10.0;
 
-			if (dij < 1.0)
-			{
-				dij = 10.0;
-			}
-			else
-			{
-				dij = 10.0 / (dij * std::sqrt(dij));
-			}
+			dij = fmin(10.0, dij = 10.0/(std::sqrt(dij) * dij));
 
 			//int n = mipp:N<float>();
 
