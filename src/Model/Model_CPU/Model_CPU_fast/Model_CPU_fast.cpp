@@ -36,7 +36,7 @@ void Model_CPU_fast
 	int n_reg = mipp::N<float>();
 	
 	#pragma omp parallel for schedule(static,1)
-	for (int i = 0; i < n_particles; i++)
+	for (int i = 0; i < n_particles; i+=n_reg)
 	{
 		for (int j = i+1; j < n_particles; j+= n_reg)
 		{		
