@@ -33,25 +33,63 @@ void Model_CPU_fast
 	std::fill(accelerationsx.begin(), accelerationsx.end(), 0);
 	std::fill(accelerationsy.begin(), accelerationsy.end(), 0);
 	std::fill(accelerationsz.begin(), accelerationsz.end(), 0);
-	int n_reg = mipp::N<float>();
+	constexpr int n_reg = mipp::N<float>();
 	
 	//#pragma omp parallel for schedule(static,1)
 	for (int i = 0; i < n_particles; i++)
 	{
-		for (int j = i+1; j < n_particles; j+=n_reg)
+		for (int j = i+1; j < n_particles-n_reg; j+=n_reg)
 		{		
+			#if 1
+
+				mipp::Reg<float> vdiffx, vdiffy, vdiffz, vdij, vtmp, vtmp1, vaccelx, vaccely, vaccelz;
+
+					vdiffx = &particles.x[j];
+					vdiffx = vdiffx-particles.x[i];
+
+					vdiffy = &particles.y[j];
+					vdiffy = vdiffy-particles.y[i];
+
+					vdiffz = &particles.z[j];
+					vdiffz = vdiffz-particles.z[i];
+
+					vtmp = vdiffz*vdiffz;
+					vdij = fmadd(vdiffy, vdiffy, vtmp);
+					vdij = fmadd(vdiffx, vdiffx, vdij);
+					
+					vtmp  = 10.;
+					vdij  = vtmp*mipp::rsqrt(vdij)/vdij;
+					vdij  = mipp::min(vdij, vtmp);
+
+					vtmp1 = initstate.masses[i];
+					vtmp = vdij*vtmp1;
+					vaccelx = &accelerationsx[j];
+					vaccely = &accelerationsy[j];
+					vaccelz = &accelerationsz[j];
+
+					vaccelx = fnmadd(vtmp, vdiffx, vaccelx);
+					vaccely = fnmadd(vtmp, vdiffy, vaccely);
+					vaccelz = fnmadd(vtmp, vdiffz, vaccelz);
+
+					vaccelx.store(&accelerationsx[j]);
+					vaccely.store(&accelerationsy[j]);
+					vaccelz.store(&accelerationsz[j]);
+
+					/*tmp[k] = dij[k] * initstate.masses[j+k];
+					accelerationsx[i] += diffx[k] * tmp[k];
+					accelerationsy[i] += diffy[k] * tmp[k];
+					accelerationsz[i] += diffz[k] * tmp[k];*/
+
+					vtmp1 = &initstate.masses[j];
+					vtmp = vdij * vtmp1;
+					accelerationsx[i] += mipp::hadd(vdiffx*vtmp);
+					accelerationsy[i] += mipp::hadd(vdiffy*vtmp);
+					accelerationsz[i] += mipp::hadd(vdiffz*vtmp);
+
+			#else
 			mipp::Reg<float> diffx, diffy, diffz, dij,
 							tmp, accelx, accely, accelz, dijcond, tmp1;
-			//const float diffx = particles.x[j] - particles.x[i];
-			//const float diffy = particles.y[j] - particles.y[i];
-			//const float diffz = particles.z[j] - particles.z[i];
-
-			/*for(int k = 0; k<n_reg; k++)
-			{
-				diffx[k] = particles.x[j+k] - particles.x[i+k];
-				diffy[k] = particles.y[j+k] - particles.y[i+k];
-				diffz[k] = particles.z[j+k] - particles.z[i+k];
-			}*/
+							
 
 			tmp   = particles.x[i];
 			diffx = &particles.x[j];
@@ -65,6 +103,8 @@ void Model_CPU_fast
 			diffz = &particles.z[j];
 			diffz = diffz-tmp;
 
+
+
 			//dij = diffx * diffx + diffy * diffy + diffz * diffz;
 			tmp = diffz*diffz;
 			dij = fmadd(diffy, diffy, tmp);
@@ -74,35 +114,12 @@ void Model_CPU_fast
 			dij  = tmp1*mipp::rsqrt(dij)/dij;
 			dij  = mipp::min(dij, tmp1);
 
-			/*if (dij < 1.0)
-			{
-				dij = 10.0;
-			}
-			else
-			{
-				dij = 10.0 / (dij * std::sqrt(dij));
-			}*/
-
-			//int n = mipp:N<float>();
-
-
-			/*for(int k = 0; k<n_reg; k++)
-			{
-				tmp[k] = dij[k] * initstate.masses[i+k];
-				accelx[i] = accelerationsx[i+k];
-				accely[i] = accelerationsy[i+k];
-				accelz[i] = accelerationsz[i+k];
-			}*/
-
 			tmp1 = &initstate.masses[j];
 			tmp  = dij*tmp1;
 			accelx = accelerationsx[i];
 			accely = accelerationsy[i];
 			accelz = accelerationsz[i];
 
-			//accelx = fmadd(tmp, diffx, accelx);
-			//accely = fmadd(tmp, diffy, accely);
-			//accelz = fmadd(tmp, diffz, accelz);
 			diffx *= tmp;
 			diffy *= tmp;
 			diffz *= tmp;
@@ -110,25 +127,7 @@ void Model_CPU_fast
 			accelerationsx[i] += mipp::hadd(diffx);
 			accelerationsx[i] += mipp::hadd(diffy);
 			accelerationsx[i] += mipp::hadd(diffz);
-			/*for(int k = 0; k<n_reg; k++)
-			{
-				accelerationsx[i+k] = accelx;
-				accelerationsy[i+k] = accely;
-				accelerationsz[i+k] = accelz;
-			}*/
 
-			//accelx.store(&accelerationsx[i]);
-			//accely.store(&accelerationsy[i]);
-			//accelz.store(&accelerationsz[i]);
-
-
-			/*for(int k = 0; k<n_reg; k++)
-			{
-				tmp[k] = dij[k] * initstate.masses[j+k];
-				accelx[k] = -accelerationsx[j+k];
-				accely[k] = -accelerationsy[j+k];
-				accelz[k] = -accelerationsz[j+k];
-			}*/
 			tmp1 = initstate.masses[i];
 			tmp = dij*tmp1;
 			accelx = &accelerationsx[j];
@@ -138,17 +137,11 @@ void Model_CPU_fast
 			accelx = fnmadd(tmp, diffx, accelx);
 			accely = fnmadd(tmp, diffy, accely);
 			accelz = fnmadd(tmp, diffz, accelz);
-			
 
-			/*for(int k = 0; k<n_reg; k++)
-			{
-				accelerationsx[j+k] = accelx;
-				accelerationsy[j+k] = accely;
-				accelerationsz[j+k] = accelz;
-			}*/
 			accelx.store(&accelerationsx[j]);
 			accely.store(&accelerationsy[j]);
 			accelz.store(&accelerationsz[j]);
+			#endif
 		}
 	}
 
