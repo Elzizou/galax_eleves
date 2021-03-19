@@ -40,8 +40,6 @@ void Model_CPU_fast
 	{
 		for (int j = i+1; j < n_particles-n_reg; j+=n_reg)
 		{		
-			#if 1
-
 				mipp::Reg<float> vdiffx, vdiffy, vdiffz, vdij, vtmp, vtmp1, vaccelx, vaccely, vaccelz;
 
 					vdiffx = &particles.x[j];
@@ -85,63 +83,40 @@ void Model_CPU_fast
 					accelerationsx[i] += mipp::hadd(vdiffx*vtmp);
 					accelerationsy[i] += mipp::hadd(vdiffy*vtmp);
 					accelerationsz[i] += mipp::hadd(vdiffz*vtmp);
+		}
+		
+		for (int j = n_particles-n_reg; j < n_particles; j++)
+		{		
+			const float diffx = particles.x[j] - particles.x[i];
+			const float diffy = particles.y[j] - particles.y[i];
+			const float diffz = particles.z[j] - particles.z[i];
 
-			#else
-			mipp::Reg<float> diffx, diffy, diffz, dij,
-							tmp, accelx, accely, accelz, dijcond, tmp1;
-							
+			float dij = diffx * diffx + diffy * diffy + diffz * diffz;
 
-			tmp   = particles.x[i];
-			diffx = &particles.x[j];
-			diffx = diffx-tmp;
+			//float dijcond = static_cast<float>(signbit(dij-1))-0.5;
+			//dij = (1.0+dijcond)*10.0/(dij*std::sqrt(dij)) + (1.0-dijcond)*10.0;
 
-			tmp   = particles.y[i];
-			diffy = &particles.y[j];
-			diffy = diffy-tmp;
+			if (dij < 1.0)
+			{
+				dij = 10.0;
+			}
+			else
+			{
+				dij = 10.0 / (dij * std::sqrt(dij));
+			}
 
-			tmp   = particles.z[i];
-			diffz = &particles.z[j];
-			diffz = diffz-tmp;
-
+			//int n = mipp:N<float>();
 
 
-			//dij = diffx * diffx + diffy * diffy + diffz * diffz;
-			tmp = diffz*diffz;
-			dij = fmadd(diffy, diffy, tmp);
-			dij = fmadd(diffx, diffx, dij); // dij = diffx^2+diffy^2+diffz^2
+			float tmp = dij * initstate.masses[j];
+			accelerationsx[i] += diffx * tmp;
+			accelerationsy[i] += diffy * tmp;
+			accelerationsz[i] += diffz * tmp;
 
-			tmp1 = 10.;
-			dij  = tmp1*mipp::rsqrt(dij)/dij;
-			dij  = mipp::min(dij, tmp1);
-
-			tmp1 = &initstate.masses[j];
-			tmp  = dij*tmp1;
-			accelx = accelerationsx[i];
-			accely = accelerationsy[i];
-			accelz = accelerationsz[i];
-
-			diffx *= tmp;
-			diffy *= tmp;
-			diffz *= tmp;
-
-			accelerationsx[i] += mipp::hadd(diffx);
-			accelerationsx[i] += mipp::hadd(diffy);
-			accelerationsx[i] += mipp::hadd(diffz);
-
-			tmp1 = initstate.masses[i];
-			tmp = dij*tmp1;
-			accelx = &accelerationsx[j];
-			accely = &accelerationsy[j];
-			accelz = &accelerationsz[j];
-
-			accelx = fnmadd(tmp, diffx, accelx);
-			accely = fnmadd(tmp, diffy, accely);
-			accelz = fnmadd(tmp, diffz, accelz);
-
-			accelx.store(&accelerationsx[j]);
-			accely.store(&accelerationsy[j]);
-			accelz.store(&accelerationsz[j]);
-			#endif
+			tmp = dij * initstate.masses[i];
+			accelerationsx[j] -= diffx * tmp;
+			accelerationsy[j] -= diffy * tmp;
+			accelerationsz[j] -= diffz * tmp;
 		}
 	}
 
