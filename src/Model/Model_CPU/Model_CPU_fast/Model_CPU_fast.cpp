@@ -21,7 +21,7 @@ void Model_CPU_fast
 	std::fill(accelerationsy.begin(), accelerationsy.end(), 0);
 	std::fill(accelerationsz.begin(), accelerationsz.end(), 0);
 	
-	#pragma omp parallel for
+	#pragma omp parallel for schedule(static,1)
 	for (int i = 0; i < n_particles; i++)
 	{
 		for (int j = i+1; j < n_particles; j++)
