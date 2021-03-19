@@ -2,7 +2,7 @@
 #include <string>
 #include <iostream>
 #include <vector>
-
+#include <fstream>
 #include <CLI/CLI.hpp>
 
 #include "Display/Display_NO/Display_NO.hpp"
@@ -13,6 +13,10 @@
 #include "Model/Model_CPU/Model_CPU_naive/Model_CPU_naive.hpp"
 #include "Model/Model_CPU/Model_CPU_fast/Model_CPU_fast.hpp"
 #include "Model/Model_GPU/Model_GPU.hpp"
+#define WRITE 0
+#define NOP 1
+#define STRAT WRITE
+
 
 int main(int argc, char ** argv)
 {
@@ -21,6 +25,12 @@ int main(int argc, char ** argv)
 
 	// maximum number of particles to be simulated
 	const int max_n_particles = 81920;
+
+#if STRAT == WRITE
+	std::ofstream monFlux("out.txt");
+	if (!monFlux) {std::cout << "error" << std::endl;}
+#elif STRAT == NOP
+#endif
 
 	// according to compile option (in cmake), use a graphical display or don't
 #ifdef GALAX_DISPLAY_SDL2
@@ -79,7 +89,7 @@ int main(int argc, char ** argv)
 		exit(EXIT_FAILURE);
 
 	bool done = false;
-
+	float fpsc=0;
 	while (!done)
 	{
 		auto t1 = std::chrono::high_resolution_clock::now();
@@ -95,8 +105,14 @@ int main(int argc, char ** argv)
 		std::chrono::duration<float, std::micro> duration_us = t2 - t1;
 
 		auto fps = (float)1.0f / (duration_us.count()) * 1000000.0f;
+		fpsc=fps;
+		#if STRAT == WRITE
+		monFlux << fpsc;
+		monFlux << std::endl;
+		#elif STRAT == NOP
+		#endif
 		std::cout << "FPS: " << std::setw(3) << fps << "\r" << std::flush;
 	}
-
+	std::cout << "FPS: " << std::setw(3) << fpsc << "\r" << std::endl;
 	return 0;
 }
