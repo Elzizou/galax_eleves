@@ -4,15 +4,16 @@
 
 #include "Model_CPU_fast.hpp"
 
+#include <algorithm>
 #include <mipp.h>
 #include <omp.h>
 #include <math.h>
 
 #define SCHEDULED 0
 #define COLLAPSED 1
-#define V1 0
-#define v2 0
-#define STRATEGY SCHEDULED
+#define REDUCTION 2
+#define COLLAPSED_SCHEDULED 3
+#define STRATEGY COLLAPSED_SCHEDULED
 
 
 Model_CPU_fast
@@ -20,6 +21,9 @@ Model_CPU_fast
 : Model_CPU(initstate, particles)
 {
 }
+
+#if STRATEGY == REDUCTION
+#endif
 
 void Model_CPU_fast
 ::step()
@@ -38,18 +42,18 @@ void Model_CPU_fast
 			const float diffz = particles.z[j] - particles.z[i];
 
 			float dij = diffx * diffx + diffy * diffy + diffz * diffz;
-
+			dij = fmin(10.0, dij = 10.0/(std::sqrt(dij) * dij));
 			//float dijcond = static_cast<float>(signbit(dij-1))-0.5;
 			//dij = (1.0+dijcond)*10.0/(dij*std::sqrt(dij)) + (1.0-dijcond)*10.0;
 
-			if (dij < 1.0)
-			{
-				dij = 10.0;
-			}
-			else
-			{
-				dij = 10.0 / (dij * std::sqrt(dij));
-			}
+			// if (dij < 1.0)
+			// {
+			// 	dij = 10.0;
+			// }
+			// else
+			// {
+			// 	dij = 10.0 / (dij * std::sqrt(dij));
+			// }
 
 			//int n = mipp:N<float>();
 
@@ -78,16 +82,76 @@ void Model_CPU_fast
 				const float diffz = particles.z[j] - particles.z[i];
 
 				float dij = diffx * diffx + diffy * diffy + diffz * diffz;
+				dij = fmin(10.0, dij = 10.0/(std::sqrt(dij) * dij));
+				// if (dij < 1.0)
+				// {
+				// 	dij = 10.0;
+				// }
+				// else
+				// {
+				// 	dij = std::sqrt(dij);
+				// 	dij = 10.0 / (dij * dij * dij);
+				// }
 
-				if (dij < 1.0)
-				{
-					dij = 10.0;
-				}
-				else
-				{
-					dij = std::sqrt(dij);
-					dij = 10.0 / (dij * dij * dij);
-				}
+				accelerationsx[i] += diffx * dij * initstate.masses[j];
+				accelerationsy[i] += diffy * dij * initstate.masses[j];
+				accelerationsz[i] += diffz * dij * initstate.masses[j];
+			}
+		}
+	}
+#elif STRATEGY == REDUCTION
+	#pragma omp parallel for schedule(static, 1) reduction()
+	for (int i = 0; i < n_particles; i++)
+	{
+		for (int j = 0; j < n_particles; j++)
+		{
+			if(i != j)
+			{
+				const float diffx = particles.x[j] - particles.x[i];
+				const float diffy = particles.y[j] - particles.y[i];
+				const float diffz = particles.z[j] - particles.z[i];
+
+				float dij = diffx * diffx + diffy * diffy + diffz * diffz;
+				dij = fmin(10.0, dij = 10.0/(std::sqrt(dij) * dij));
+				// if (dij < 1.0)
+				// {
+				// 	dij = 10.0;
+				// }
+				// else
+				// {
+				// 	dij = std::sqrt(dij);
+				// 	dij = 10.0 / (dij * dij * dij);
+				// }
+
+				accelerationsx[i] += diffx * dij * initstate.masses[j];
+				accelerationsy[i] += diffy * dij * initstate.masses[j];
+				accelerationsz[i] += diffz * dij * initstate.masses[j];
+			}
+		}
+	}
+#elif STRATEGY == COLLAPSED_SCHEDULED
+	#pragma omp parallel for simd collapse(2) schedule(auto)
+	for (int i = 0; i < n_particles; i++)
+	{
+		for (int j = 0; j < n_particles; j++)
+		{
+			if(i != j)
+			{
+				const float diffx = particles.x[j] - particles.x[i];
+				const float diffy = particles.y[j] - particles.y[i];
+				const float diffz = particles.z[j] - particles.z[i];
+
+				float dij = diffx * diffx + diffy * diffy + diffz * diffz;
+				dij = fmin(10.0, dij = 10.0/(std::sqrt(dij) * dij));
+				// if (dij < 1.0)
+				// {
+				// 	dij = 10.0;
+				// }
+				// else
+				// {
+				// 	dij = std::sqrt(dij);
+				// 	dij = 10.0 / (dij * dij * dij);
+				// }
 
 				accelerationsx[i] += diffx * dij * initstate.masses[j];
 				accelerationsy[i] += diffy * dij * initstate.masses[j];
