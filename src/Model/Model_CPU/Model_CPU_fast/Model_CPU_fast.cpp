@@ -35,11 +35,13 @@ void Model_CPU_fast
 	std::fill(accelerationsz.begin(), accelerationsz.end(), 0);
 	constexpr int n_reg = mipp::N<float>();
 	
-	//#pragma omp parallel for schedule(static,1)
+	#pragma omp parallel for schedule(static,1)
 	for (int i = 0; i < n_particles; i++)
 	{
 		for (int j = 0; j < n_particles-n_reg; j+=n_reg)
 		{		
+			if(i != j)
+			{
 				mipp::Reg<float> vdiffx, vdiffy, vdiffz, vdij, vtmp, vtmp1, vaccelx, vaccely, vaccelz;
 
 					vdiffx = &particles.x[j];
@@ -72,6 +74,7 @@ void Model_CPU_fast
 					vaccelx.store(&accelerationsx[j]);
 					vaccely.store(&accelerationsy[j]);
 					vaccelz.store(&accelerationsz[j]);
+			}
 		}
 		
 		for (int j = n_particles-n_reg; j < n_particles; j++)
