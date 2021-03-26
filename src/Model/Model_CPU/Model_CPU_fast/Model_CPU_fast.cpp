@@ -13,7 +13,9 @@
 #define COLLAPSED 1
 #define REDUCTION 2
 #define COLLAPSED_SCHEDULED 3
-#define STRATEGY COLLAPSED_SCHEDULED
+#define FOR 4
+#define FOR_TRIG 5
+#define STRATEGY FOR
 
 
 Model_CPU_fast
@@ -157,6 +159,74 @@ void Model_CPU_fast
 				accelerationsy[i] += diffy * dij * initstate.masses[j];
 				accelerationsz[i] += diffz * dij * initstate.masses[j];
 			}
+		}
+	}
+#elif STRATEGY == FOR
+	#pragma omp parallel for
+	for (int i = 0; i < n_particles; i++)
+	{
+		for (int j = 0; j < n_particles; j++)
+		{
+			if(i != j)
+			{
+				const float diffx = particles.x[j] - particles.x[i];
+				const float diffy = particles.y[j] - particles.y[i];
+				const float diffz = particles.z[j] - particles.z[i];
+
+				float dij = diffx * diffx + diffy * diffy + diffz * diffz;
+				dij = fmin(10.0, dij = 10.0/(std::sqrt(dij) * dij));
+				// if (dij < 1.0)
+				// {
+				// 	dij = 10.0;
+				// }
+				// else
+				// {
+				// 	dij = std::sqrt(dij);
+				// 	dij = 10.0 / (dij * dij * dij);
+				// }
+
+				accelerationsx[i] += diffx * dij * initstate.masses[j];
+				accelerationsy[i] += diffy * dij * initstate.masses[j];
+				accelerationsz[i] += diffz * dij * initstate.masses[j];
+			}
+		}
+	}
+#elif STRATEGY == FOR_TRIG
+	#pragma omp parallel for 
+	for (int i = 0; i < n_particles; i++)
+	{
+		for (int j = i+1; j < n_particles; j++)
+		{
+			const float diffx = particles.x[j] - particles.x[i];
+			const float diffy = particles.y[j] - particles.y[i];
+			const float diffz = particles.z[j] - particles.z[i];
+
+			float dij = diffx * diffx + diffy * diffy + diffz * diffz;
+			dij = fmin(10.0, dij = 10.0/(std::sqrt(dij) * dij));
+			//float dijcond = static_cast<float>(signbit(dij-1))-0.5;
+			//dij = (1.0+dijcond)*10.0/(dij*std::sqrt(dij)) + (1.0-dijcond)*10.0;
+
+			// if (dij < 1.0)
+			// {
+			// 	dij = 10.0;
+			// }
+			// else
+			// {
+			// 	dij = 10.0 / (dij * std::sqrt(dij));
+			// }
+
+			//int n = mipp:N<float>();
+
+
+			float tmp = dij * initstate.masses[j];
+			accelerationsx[i] += diffx * tmp;
+			accelerationsy[i] += diffy * tmp;
+			accelerationsz[i] += diffz * tmp;
+
+			tmp = dij * initstate.masses[i];
+			accelerationsx[j] -= diffx * tmp;
+			accelerationsy[j] -= diffy * tmp;
+			accelerationsz[j] -= diffz * tmp;
 		}
 	}
 #endif
