@@ -91,8 +91,7 @@ void Model_CPU_fast
 			//dij = (1.0+dijcond)*10.0/(dij*std::sqrt(dij)) + (1.0-dijcond)*10.0;
 
 			dij = fmin(10.0, dij = 10.0/(std::sqrt(dij) * dij));
-
-			//int n = mipp:N<float>();
+			//int n = mipp:N<float>(); keke
 
 
 			float tmp = dij * initstate.masses[j];
