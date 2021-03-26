@@ -79,6 +79,8 @@ void Model_CPU_fast
 		
 		for (int j = n_particles-n_reg; j < n_particles; j++)
 		{		
+			if(i != j)
+			{
 			const float diffx = particles.x[j] - particles.x[i];
 			const float diffy = particles.y[j] - particles.y[i];
 			const float diffz = particles.z[j] - particles.z[i];
@@ -97,6 +99,7 @@ void Model_CPU_fast
 			accelerationsx[i] += diffx * tmp;
 			accelerationsy[i] += diffy * tmp;
 			accelerationsz[i] += diffz * tmp;
+			}
 		}
 	}
 
