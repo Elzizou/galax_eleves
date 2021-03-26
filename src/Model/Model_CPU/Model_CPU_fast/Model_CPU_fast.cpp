@@ -38,7 +38,7 @@ void Model_CPU_fast
 	//#pragma omp parallel for schedule(static,1)
 	for (int i = 0; i < n_particles; i++)
 	{
-		for (int j = i+1; j < n_particles-n_reg; j+=n_reg)
+		for (int j = 0; j < n_particles-n_reg; j+=n_reg)
 		{		
 				mipp::Reg<float> vdiffx, vdiffy, vdiffz, vdij, vtmp, vtmp1, vaccelx, vaccely, vaccelz;
 
@@ -72,17 +72,6 @@ void Model_CPU_fast
 					vaccelx.store(&accelerationsx[j]);
 					vaccely.store(&accelerationsy[j]);
 					vaccelz.store(&accelerationsz[j]);
-
-					/*tmp[k] = dij[k] * initstate.masses[j+k];
-					accelerationsx[i] += diffx[k] * tmp[k];
-					accelerationsy[i] += diffy[k] * tmp[k];
-					accelerationsz[i] += diffz[k] * tmp[k];*/
-
-					vtmp1 = &initstate.masses[j];
-					vtmp = vdij * vtmp1;
-					accelerationsx[i] += mipp::hadd(vdiffx*vtmp);
-					accelerationsy[i] += mipp::hadd(vdiffy*vtmp);
-					accelerationsz[i] += mipp::hadd(vdiffz*vtmp);
 		}
 		
 		for (int j = n_particles-n_reg; j < n_particles; j++)
@@ -105,11 +94,6 @@ void Model_CPU_fast
 			accelerationsx[i] += diffx * tmp;
 			accelerationsy[i] += diffy * tmp;
 			accelerationsz[i] += diffz * tmp;
-
-			tmp = dij * initstate.masses[i];
-			accelerationsx[j] -= diffx * tmp;
-			accelerationsy[j] -= diffy * tmp;
-			accelerationsz[j] -= diffz * tmp;
 		}
 	}
 
